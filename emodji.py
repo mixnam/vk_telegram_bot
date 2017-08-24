@@ -1,0 +1,8 @@
+music = b"\xF0\x9F\x8E\xB6".decode("utf-8")
+search = b"\xF0\x9F\x94\x8E".decode("utf-8")
+finger_up = b"\xF0\x9F\x91\x8D".decode("utf-8")
+finger_down = b"\xF0\x9F\x91\x8E".decode("utf-8")
+shit = b"\xF0\x9F\x92\xA9".decode("utf-8")
+right = b"\xE2\x96\xB6".decode("utf-8")
+left = b"\xE2\x97\x80".decode("utf-8")
+star = b"\xE2\xAD\x90".decode("utf-8")
