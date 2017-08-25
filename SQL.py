@@ -1,5 +1,29 @@
 # -*- coding:utf-8 -*-
 import sqlite3
+import logging
+
+logging.basicConfig(format='%(levelname)-8s [%(asctime)s] %(message)s',
+                    level=logging.DEBUG,
+                    filename='vk_bot_log.log')
+log_count = 0
+
+
+def clear_log(f):
+    def wrap(*args, **kwargs):
+        global log_count
+        if log_count >= 200:
+            with open('vk_bot_log.log', 'w'):
+                pass
+            log_count = 1
+            f(*args, **kwargs)
+        else:
+            log_count += 1
+            f(*args, **kwargs)
+
+    return wrap
+
+
+make_log = clear_log(logging.info)
 
 
 def SQL_commit(f):
@@ -12,9 +36,9 @@ def SQL_commit(f):
         try:
             cursor.execute(sql)
         except sqlite3.DatabaseError as err:
-            print("Ошибка :", err)
+            make_log("Ошибка : %s" % err)
         else:
-            print(success)
+            make_log(success)
             connection.commit()
 
         cursor.close()
@@ -34,9 +58,9 @@ def SQL_select(f):
         try:
             cursor.execute(sql)
         except sqlite3.DatabaseError as err:
-            print("Ошибка :", err)
+            make_log("Ошибка : %s" % err)
         else:
-            print(success)
+            make_log(success)
 
         selected = cursor.fetchmany(50)
         cursor.close()

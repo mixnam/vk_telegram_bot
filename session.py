@@ -2,6 +2,7 @@
 import vk_api
 import bot_config
 from vk_api.audio import VkAudio
+from SQL import make_log
 
 
 class Session:
@@ -20,7 +21,7 @@ class Session:
             vk_session.auth()
             return vk_session
         except vk_api.AuthError as error_msg:
-            print(error_msg)
+            make_log(error_msg)
 
     def make_search(self, track, chat_id):
         vkaudio = VkAudio(self.vk_session)
