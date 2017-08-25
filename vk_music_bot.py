@@ -1,11 +1,16 @@
 # -*- coding:utf-8 -*-
+import os, sys
+
+sys.path.append(os.getcwd())
+
 import flask
-import telebot
 import requests
+import telebot
+from telebot import types
+
+import SQL
 import bot_config
 import emodji
-import SQL
-from telebot import types
 from session import Session
 
 BOT_TOKEN = bot_config.token_bot
