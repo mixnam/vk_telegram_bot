@@ -4,7 +4,7 @@ import logging
 
 logging.basicConfig(format='%(levelname)-8s [%(asctime)s] %(message)s',
                     level=logging.DEBUG,
-                    filename='vk_bot_log.log')
+                    filename='home/m/mixnam/mixnam.beget.tech/vk_telegram_bot/vk_bot_log.log')
 log_count = 0
 
 
