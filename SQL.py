@@ -4,7 +4,7 @@ import logging
 
 logging.basicConfig(format='%(levelname)-8s [%(asctime)s] %(message)s',
                     level=logging.DEBUG,
-                    filename='home/m/mixnam/mixnam.beget.tech/vk_telegram_bot/vk_bot_log.log')
+                    filename='vk_bot_log.log')
 log_count = 0
 
 
@@ -120,13 +120,14 @@ def add_track(track):
     title = " ".join(track['title'].split("'"))
 
     sql = """
-    INSERT INTO tracks(id, artist, title, url, dur)
-    VALUES ('{0}','{1}','{2}','{3}', {4})
+    INSERT INTO tracks(id, artist, title, url, dur, telegram_id)
+    VALUES ('{0}','{1}','{2}','{3}', {4}, '{5}')
     """.format(track['id'],
                artist,
                title,
                track['url'],
-               track['dur'])
+               track['dur'],
+               track['telegram_id'])
     success = "Трек успешно добавлен в базу данных"
     return sql, success
 

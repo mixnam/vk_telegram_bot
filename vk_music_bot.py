@@ -1,8 +1,4 @@
 # -*- coding:utf-8 -*-
-import os, sys
-
-sys.path.append(os.getcwd())
-
 import flask
 import requests
 import telebot
@@ -52,7 +48,6 @@ def pagination(page, chat_id):
 def keyboard_to_show(tracks, page_to_show):
     keyboard = types.InlineKeyboardMarkup()
     for j in tracks:
-        SQL.add_track(j)
         sec = int(j['dur']) % 60
         minute = int(j['dur']) // 60
         if sec < 10:
@@ -159,7 +154,7 @@ def make_search_handler(message):
     search_status = SQL.get_search_status(chat_id)[0]['search_is_on']
     if search_status == 1:
         SQL.update_page(chat_id=chat_id,
-                        new_val=0)
+                        new_val=5)
         page = 5
         vk_session.make_search(track=message.text,
                                chat_id=chat_id)
@@ -172,25 +167,27 @@ def make_search_handler(message):
                          reply_markup=keyboard)
 
         for i in tracks_to_show:
-            track = SQL.get_track(i['id'])[0]
-            if track['telegram_id'] is not None:
-                pass
-            else:
-                response = requests.get(i['url'])
-                audio = response.content
-                sended_message = bot.send_audio('@vk_music_storage',
+            track_id = i['id']
+            try:
+                SQL.get_track(track_id)[0]
+            except:
+                tracks = vk_session.tracks[chat_id]
+                track = filter(lambda x: x['id'] == track_id, tracks).__next__()
+                audio = requests.get(track['url']).content
+                sended_message = bot.send_audio(chat_id='@vk_music_storage',
                                                 audio=audio,
-                                                duration=i['dur'],
-                                                performer=i['artist'],
-                                                title=i['title'])
-                SQL.update_track(id=i['id'],
-                                 telegram_id=sended_message.audio.file_id)
+                                                title=track['title'],
+                                                performer=track['artist'],
+                                                duration=track['dur'])
+                track['telegram_id'] = sended_message.audio.file_id
+                SQL.add_track(track)
 
 
 @bot.callback_query_handler(func=lambda callback: True)
 def callback_answer(callback):
     if callback.data.split("?")[0] == "track":
         track_id = callback.data.split("?")[1]
+        chat_id = callback.message.chat.id
         keyboard = types.InlineKeyboardMarkup()
         like_botton = types.InlineKeyboardButton(text="{}".format(emodji.finger_up),
                                                  callback_data="like?{}".format(track_id))
@@ -198,23 +195,25 @@ def callback_answer(callback):
                                                     callback_data="dislike?{}".format(track_id))
         keyboard.row(like_botton, dislike_button)
 
-        track = SQL.get_track(track_id)[0]
-        if track['telegram_id'] is not None:
-            bot.send_audio(chat_id=callback.message.chat.id,
+        try:
+            track = SQL.get_track(track_id)[0]
+            bot.send_audio(chat_id=chat_id,
                            audio=track['telegram_id'],
                            reply_markup=keyboard)
-        else:
+        except:
+            tracks = vk_session.tracks[chat_id]
+            track = filter(lambda x: x['id'] == track_id, tracks).__next__()
             bot.send_message(callback.message.chat.id,
                              "Этой композиции еще нет, на серверах телеграмма, подождите пока я ее загружу.")
             audio = requests.get(track['url']).content
-            sended_message = bot.send_audio(chat_id=callback.message.chat.id,
+            sended_message = bot.send_audio(chat_id=chat_id,
                                             audio=audio,
                                             title=track['title'],
                                             performer=track['artist'],
                                             duration=track['dur'],
                                             reply_markup=keyboard)
-            SQL.update_track(telegram_id=sended_message.audio.file_id,
-                             id=callback.data.split("?")[1])
+            track['telegram_id'] = sended_message.audio.file_id
+            SQL.add_track(track)
 
     elif callback.data == "vk_playlist":
         chat_id = callback.message.chat.id
