@@ -189,9 +189,9 @@ def callback_answer(callback):
         track_id = callback.data.split("?")[1]
         chat_id = callback.message.chat.id
         keyboard = types.InlineKeyboardMarkup()
-        like_botton = types.InlineKeyboardButton(text="{}".format(emodji.finger_up),
+        like_botton = types.InlineKeyboardButton(text="{}".format(emodji.plus),
                                                  callback_data="like?{}".format(track_id))
-        dislike_button = types.InlineKeyboardButton(text="{}".format(emodji.finger_down),
+        dislike_button = types.InlineKeyboardButton(text="{}".format(emodji.minus),
                                                     callback_data="dislike?{}".format(track_id))
         keyboard.row(like_botton, dislike_button)
 
@@ -230,6 +230,9 @@ def callback_answer(callback):
         tracks_to_show, page_to_show = pagination(page=page,
                                                   chat_id=chat_id)
         keyboard = keyboard_to_show(tracks_to_show, page_to_show)
+        down_button = types.InlineKeyboardButton(text="{}".format(emodji.down),
+                                                 callback_data="down")
+        keyboard.add(down_button)
 
         bot.edit_message_text(text="Ваш плейлист в телеграмм",
                               chat_id=chat_id,
@@ -266,7 +269,8 @@ def callback_answer(callback):
     elif callback.data == "right":
         chat_id = callback.message.chat.id
         page = SQL.get_page(chat_id)[0]['page']
-        if page == 50:
+        tracks_count = len(vk_session.tracks[chat_id])
+        if page >= tracks_count:
             pass
         else:
             page += 5
@@ -281,17 +285,58 @@ def callback_answer(callback):
                                   reply_markup=keyboard,
                                   text="Результаты поиска:")
 
+    elif callback.data == "down":
+        chat_id = callback.message.chat.id
+        page = SQL.get_page(chat_id)[0]['page']
+        tracks_to_show, page_to_show = pagination(page=page,
+                                                  chat_id=chat_id)
+        for i in tracks_to_show:
+            keyboard = types.InlineKeyboardMarkup()
+            like_botton = types.InlineKeyboardButton(text="{}".format(emodji.plus),
+                                                     callback_data="like?{}".format(i['id']))
+            dislike_button = types.InlineKeyboardButton(text="{}".format(emodji.minus),
+                                                        callback_data="dislike?{}".format(i['id']))
+            keyboard.row(like_botton, dislike_button)
+
+            bot.send_audio(chat_id=chat_id,
+                           audio=i['telegram_id'],
+                           reply_markup=keyboard)
+
     elif callback.data.split("?")[0] == "like":
         chat_id = callback.message.chat.id
         track_id = callback.data.split("?")[1]
         SQL.like_track(chat_id=chat_id,
                        id=track_id)
 
+        keyboard = types.InlineKeyboardMarkup()
+        text_button = types.InlineKeyboardButton(text="Трек добавлен в плейлист telegram",
+                                                 callback_data=" ")
+        dislike_botton = types.InlineKeyboardButton(text=emodji.minus,
+                                                    callback_data="dislike?{}".format(track_id))
+        keyboard.add(text_button)
+        keyboard.add(dislike_botton)
+
+        bot.edit_message_reply_markup(chat_id=chat_id,
+                                      message_id=callback.message.message_id,
+                                      reply_markup=keyboard)
+
     elif callback.data.split("?")[0] == "dislike":
         chat_id = callback.message.chat.id
         track_id = callback.data.split("?")[1]
         SQL.dislike_track(chat_id=chat_id,
                           id=track_id)
+
+        keyboard = types.InlineKeyboardMarkup()
+        text_button = types.InlineKeyboardButton(text="Трек удален из плейлиста telegram",
+                                                 callback_data=" ")
+        dislike_botton = types.InlineKeyboardButton(text=emodji.plus,
+                                                    callback_data="like?{}".format(track_id))
+        keyboard.add(text_button)
+        keyboard.add(dislike_botton)
+
+        bot.edit_message_reply_markup(chat_id=chat_id,
+                                      message_id=callback.message.message_id,
+                                      reply_markup=keyboard)
 
 
 if __name__ == '__main__':
