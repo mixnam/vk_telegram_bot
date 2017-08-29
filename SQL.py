@@ -171,7 +171,6 @@ def dislike_track(chat_id, id):
     sql = """
     DELETE FROM users_tracks
     WHERE user_id = '{0}' AND track_id = '{1}'
-    LIMIT 1
     """.format(chat_id, id)
     success = "Трек разонравился"
     return sql, success
